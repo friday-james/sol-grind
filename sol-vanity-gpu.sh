@@ -133,8 +133,11 @@ if [ ! -d "SolVanityCL" ]; then
 
         # Install OpenCL and Python dependencies
         echo "[*] Installing OpenCL and Python dependencies..."
-        sudo apt-get install -y -qq ocl-icd-opencl-dev opencl-headers clinfo python3-pip
-        pip3 install -q -r requirements.txt 2>/dev/null || true
+        sudo apt-get install -y -qq ocl-icd-opencl-dev opencl-headers clinfo python3-pip python3-dev
+
+        # Install Python packages directly
+        echo "[*] Installing Python packages (pyopencl, base58, etc)..."
+        pip3 install --user pyopencl base58 click 2>&1 | grep -v "already satisfied" || true
 
         echo ""
         echo "=== Starting GPU Search (OpenCL/Python) ==="
