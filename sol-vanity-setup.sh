@@ -122,9 +122,9 @@ if git clone https://github.com/WincerChan/SolVanityCL.git 2>/dev/null; then
 
     sudo apt-get install -y -qq ocl-icd-opencl-dev opencl-headers clinfo python3-pip python3-dev
 
-    # Install Python packages directly
+    # Install Python packages directly (use --break-system-packages for Ubuntu 24.04+)
     echo "Installing Python packages (pyopencl, base58, etc)..."
-    pip3 install --user pyopencl base58 click 2>&1 | grep -v "already satisfied" || true
+    pip3 install --break-system-packages pyopencl base58 click 2>&1 | grep -v "already satisfied" || true
 
     echo ""
     echo "=== Starting GPU Search (OpenCL/Python) ==="
