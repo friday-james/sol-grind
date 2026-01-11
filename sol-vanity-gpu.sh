@@ -71,9 +71,9 @@ source "$HOME/.cargo/env" 2>/dev/null || true
 
 # Install Solana CLI
 if ! command -v solana-keygen &> /dev/null; then
-    echo "[*] Installing Solana CLI..."
-    # Use v2.0.20 directly to avoid SSL issues with release.solana.com
-    wget -q https://github.com/solana-labs/solana/releases/download/v2.0.20/solana-release-x86_64-unknown-linux-gnu.tar.bz2 -O /tmp/solana-release.tar.bz2
+    echo "[*] Installing Solana CLI (Agave v2.0.14)..."
+    # Solana v2.0+ is now maintained as Agave by Anza
+    wget -q https://github.com/anza-xyz/agave/releases/download/v2.0.14/solana-release-x86_64-unknown-linux-gnu.tar.bz2 -O /tmp/solana-release.tar.bz2
     tar -xjf /tmp/solana-release.tar.bz2 -C /tmp
     mkdir -p "$HOME/.local/share/solana/install/active_release"
     cp -r /tmp/solana-release/bin "$HOME/.local/share/solana/install/active_release/"

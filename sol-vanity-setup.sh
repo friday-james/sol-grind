@@ -67,8 +67,9 @@ fi
 
 # Install Solana CLI for CPU fallback
 if ! command -v solana-keygen &> /dev/null; then
-    echo "[4.5/5] Installing Solana CLI..."
-    wget -q https://github.com/solana-labs/solana/releases/download/v2.0.20/solana-release-x86_64-unknown-linux-gnu.tar.bz2 -O /tmp/solana-release.tar.bz2
+    echo "[4.5/5] Installing Solana CLI (Agave v2.0.14)..."
+    # Solana v2.0+ is now maintained as Agave by Anza
+    wget -q https://github.com/anza-xyz/agave/releases/download/v2.0.14/solana-release-x86_64-unknown-linux-gnu.tar.bz2 -O /tmp/solana-release.tar.bz2
     tar -xjf /tmp/solana-release.tar.bz2 -C /tmp
     mkdir -p "$HOME/.local/share/solana/install/active_release"
     cp -r /tmp/solana-release/bin "$HOME/.local/share/solana/install/active_release/"
