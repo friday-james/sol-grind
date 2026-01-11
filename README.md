@@ -11,13 +11,25 @@ GPU-accelerated Solana vanity address generator scripts for AWS GPU instances (g
 
 ## Quick Start
 
-### On AWS g6.xlarge (or any GPU instance)
+### One-Shot Script (Recommended)
 
 ```bash
 # Clone the repo
 git clone https://github.com/friday-james/sol-grind.git
 cd sol-grind
 
+# Run the one-shot script
+./vanity.sh ifsa1e
+
+# Or with case-sensitive mode
+./vanity.sh ifsa1e true
+```
+
+**That's it!** The script handles everything automatically.
+
+### Full Setup Script (First Time on Fresh Instance)
+
+```bash
 # Run the GPU script with your desired suffix
 ./sol-vanity-gpu.sh ifsa1e
 ```
@@ -31,19 +43,38 @@ The script will:
 
 ## Performance
 
-| Hardware | Keys/Second | Time for 6-char suffix |
-|----------|-------------|------------------------|
-| CPU (16 threads) | ~167k | ~63 hours |
-| NVIDIA L4 (g6.xlarge) | 50-100M | 6-13 minutes |
-| NVIDIA A10G (g5.xlarge) | 100-200M | 3-7 minutes |
+| Hardware | Keys/Second | Time (case-insensitive) | Time (case-sensitive) |
+|----------|-------------|-------------------------|------------------------|
+| CPU (16 threads) | ~167k | ~2 hours | ~63 hours |
+| NVIDIA L4 (g6.xlarge) | 20-25M | **1-2 min** | ~30 min |
+| NVIDIA A10G (g5.xlarge) | 100-200M | **<1 min** | 3-7 min |
 
-**6-character suffix**: ~38 billion attempts needed on average
+**Note:** Case-insensitive is **30x faster** (matches any case: `ifsa1e`, `IFSA1E`, `IfSa1E`, etc.)
 
 ## Scripts
 
+### `vanity.sh` ⭐ (Recommended)
+
+One-shot script that just works. No fuss, no configuration.
+
+```bash
+./vanity.sh <suffix> [case-sensitive]
+```
+
+**Arguments:**
+- `suffix` - The ending you want (e.g., `ifsa1e`)
+- `case-sensitive` - Optional: `true` or `false` (default: `false`)
+
+**Example:**
+```bash
+./vanity.sh ifsa1e        # Case-insensitive (fast, ~1-2 min)
+./vanity.sh ifsa1e false  # Same as above
+./vanity.sh ifsa1e true   # Case-sensitive (slow, ~30 min)
+```
+
 ### `sol-vanity-gpu.sh`
 
-Main GPU-accelerated script for production use.
+Full setup script with driver installation and fallback options.
 
 ```bash
 ./sol-vanity-gpu.sh <suffix>
