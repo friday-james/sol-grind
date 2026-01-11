@@ -14,46 +14,41 @@ echo ""
 
 # Check GPU and install drivers if needed
 echo "[*] Checking GPU..."
-if ! command -v nvidia-smi &> /dev/null; then
-    echo "NVIDIA drivers not found. Installing now..."
+if ! nvidia-smi &> /dev/null; then
+    if ! command -v nvidia-smi &> /dev/null; then
+        echo "NVIDIA drivers not found. Installing now..."
+    else
+        echo "NVIDIA drivers installed but not loaded. Installing/updating..."
+    fi
     echo ""
 
     # Update package list
     sudo apt-get update -qq
 
-    # Install NVIDIA drivers
+    # For AWS instances, use ubuntu-drivers for best compatibility
     echo "Installing NVIDIA drivers (this may take a few minutes)..."
-    sudo apt-get install -y nvidia-driver-535 || {
-        echo "ERROR: Failed to install NVIDIA drivers"
-        exit 1
-    }
+    sudo apt-get install -y ubuntu-drivers-common
+    sudo ubuntu-drivers install || sudo apt-get install -y nvidia-driver-535
 
     echo ""
     echo "=========================================="
-    echo "NVIDIA drivers installed successfully!"
+    echo "NVIDIA drivers installed!"
     echo "=========================================="
     echo ""
-    echo "A REBOOT is REQUIRED for drivers to load."
+    echo "*** REBOOT REQUIRED ***"
+    echo ""
+    echo "Run: sudo reboot"
     echo ""
     echo "After reboot, run this script again:"
-    echo "  ./sol-vanity-gpu.sh $SUFFIX"
+    echo "  cd ~/sol-grind && ./sol-vanity-gpu.sh $SUFFIX"
     echo ""
-    read -p "Reboot now? (y/n): " -n 1 -r
-    echo
-    if [[ $REPLY =~ ^[Yy]$ ]]; then
-        sudo reboot
-    else
-        echo "Please reboot manually with: sudo reboot"
-        exit 0
-    fi
+    echo "Rebooting in 5 seconds... (Ctrl+C to cancel)"
+    sleep 5
+    sudo reboot
 fi
 
 echo "[*] GPU Info:"
-nvidia-smi --query-gpu=name,memory.total,driver_version --format=csv,noheader || {
-    echo "ERROR: nvidia-smi found but GPU not detected."
-    echo "You may need to reboot: sudo reboot"
-    exit 1
-}
+nvidia-smi --query-gpu=name,memory.total,driver_version --format=csv,noheader
 echo ""
 
 # Install dependencies

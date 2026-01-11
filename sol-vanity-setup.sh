@@ -32,36 +32,34 @@ fi
 
 # Check for NVIDIA GPU and install drivers if needed
 echo "[4/5] Checking GPU..."
-if ! command -v nvidia-smi &> /dev/null; then
-    echo "NVIDIA drivers not found. Installing now..."
+if ! nvidia-smi &> /dev/null; then
+    if ! command -v nvidia-smi &> /dev/null; then
+        echo "NVIDIA drivers not found. Installing now..."
+    else
+        echo "NVIDIA drivers installed but not loaded. Installing/updating..."
+    fi
     echo ""
 
     # Install NVIDIA drivers
     echo "Installing NVIDIA drivers (this may take a few minutes)..."
-    sudo apt-get install -y nvidia-driver-535 || {
-        echo "WARNING: Failed to install NVIDIA drivers. Will use CPU fallback."
-    }
+    sudo apt-get install -y ubuntu-drivers-common
+    sudo ubuntu-drivers install || sudo apt-get install -y nvidia-driver-535
 
-    if command -v nvidia-smi &> /dev/null; then
-        echo ""
-        echo "=========================================="
-        echo "NVIDIA drivers installed successfully!"
-        echo "=========================================="
-        echo ""
-        echo "A REBOOT is REQUIRED for drivers to load."
-        echo ""
-        echo "After reboot, run this script again:"
-        echo "  ./sol-vanity-setup.sh $SUFFIX"
-        echo ""
-        read -p "Reboot now? (y/n): " -n 1 -r
-        echo
-        if [[ $REPLY =~ ^[Yy]$ ]]; then
-            sudo reboot
-        else
-            echo "Please reboot manually with: sudo reboot"
-            exit 0
-        fi
-    fi
+    echo ""
+    echo "=========================================="
+    echo "NVIDIA drivers installed!"
+    echo "=========================================="
+    echo ""
+    echo "*** REBOOT REQUIRED ***"
+    echo ""
+    echo "Run: sudo reboot"
+    echo ""
+    echo "After reboot, run this script again:"
+    echo "  cd ~/sol-grind && ./sol-vanity-setup.sh $SUFFIX"
+    echo ""
+    echo "Rebooting in 5 seconds... (Ctrl+C to cancel)"
+    sleep 5
+    sudo reboot
 else
     nvidia-smi --query-gpu=name,memory.total --format=csv,noheader
     echo ""
