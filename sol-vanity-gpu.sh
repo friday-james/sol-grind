@@ -106,16 +106,22 @@ if [ ! -d "grincel.gpu" ]; then
         fi
 
         echo "[*] Building grincel.gpu..."
-        zig build -Doptimize=ReleaseFast
+        if zig build -Doptimize=ReleaseFast 2>&1; then
+            if [ -f "./zig-out/bin/grincel.gpu" ]; then
+                echo ""
+                echo "=== Starting GPU Search (Zig/Vulkan) ==="
+                echo "Searching for: *$SUFFIX"
+                echo "Press Ctrl+C when found"
+                echo ""
 
-        echo ""
-        echo "=== Starting GPU Search (Zig/Vulkan) ==="
-        echo "Searching for: *$SUFFIX"
-        echo "Press Ctrl+C when found"
-        echo ""
-
-        ./zig-out/bin/grincel.gpu --suffix "$SUFFIX"
-        exit 0
+                ./zig-out/bin/grincel.gpu --suffix "$SUFFIX"
+                exit 0
+            else
+                echo "Build succeeded but binary not found. Trying fallback..."
+            fi
+        else
+            echo "Zig build failed. Trying fallback..."
+        fi
     fi
 fi
 

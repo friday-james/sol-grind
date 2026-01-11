@@ -98,15 +98,21 @@ if git clone https://github.com/ziglana/grincel.gpu.git 2>/dev/null; then
     sudo apt-get install -y -qq vulkan-tools libvulkan-dev vulkan-validationlayers
 
     echo "Building grincel.gpu..."
-    zig build -Doptimize=ReleaseFast
+    if zig build -Doptimize=ReleaseFast 2>&1; then
+        if [ -f "./zig-out/bin/grincel.gpu" ]; then
+            echo ""
+            echo "=== Starting GPU Search (Zig/Vulkan) ==="
+            echo "Looking for address ending with: $SUFFIX"
+            echo ""
 
-    echo ""
-    echo "=== Starting GPU Search (Zig/Vulkan) ==="
-    echo "Looking for address ending with: $SUFFIX"
-    echo ""
-
-    ./zig-out/bin/grincel.gpu --suffix "$SUFFIX"
-    exit 0
+            ./zig-out/bin/grincel.gpu --suffix "$SUFFIX"
+            exit 0
+        else
+            echo "Build succeeded but binary not found. Trying fallback..."
+        fi
+    else
+        echo "Zig build failed. Trying fallback..."
+    fi
 fi
 
 # Fallback: Try OpenCL-based SolVanityCL (Python/C)
