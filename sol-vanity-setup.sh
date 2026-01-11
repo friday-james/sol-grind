@@ -131,7 +131,7 @@ if git clone https://github.com/WincerChan/SolVanityCL.git 2>/dev/null; then
     echo "Looking for address ending with: $SUFFIX"
     echo ""
 
-    python3 main.py search-pubkey --ends-with "$SUFFIX"
+    python3 main.py search-pubkey --ends-with "$SUFFIX" --is-case-sensitive False
     exit 0
 fi
 

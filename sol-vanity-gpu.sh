@@ -145,7 +145,7 @@ if [ ! -d "SolVanityCL" ]; then
         echo "Press Ctrl+C when found"
         echo ""
 
-        python3 main.py search-pubkey --ends-with "$SUFFIX"
+        python3 main.py search-pubkey --ends-with "$SUFFIX" --is-case-sensitive False
         exit 0
     fi
 fi
