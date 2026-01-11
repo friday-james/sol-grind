@@ -54,7 +54,7 @@ echo ""
 # Install dependencies
 echo "[*] Installing dependencies..."
 sudo apt-get update -qq
-sudo apt-get install -y -qq build-essential git curl pkg-config libssl-dev
+sudo apt-get install -y -qq build-essential git curl wget pkg-config libssl-dev
 
 # Install CUDA toolkit if nvcc not found
 if ! command -v nvcc &> /dev/null; then
@@ -72,7 +72,12 @@ source "$HOME/.cargo/env" 2>/dev/null || true
 # Install Solana CLI
 if ! command -v solana-keygen &> /dev/null; then
     echo "[*] Installing Solana CLI..."
-    sh -c "$(curl -sSfL https://release.solana.com/stable/install)"
+    # Use v2.0.20 directly to avoid SSL issues with release.solana.com
+    wget -q https://github.com/solana-labs/solana/releases/download/v2.0.20/solana-release-x86_64-unknown-linux-gnu.tar.bz2 -O /tmp/solana-release.tar.bz2
+    tar -xjf /tmp/solana-release.tar.bz2 -C /tmp
+    mkdir -p "$HOME/.local/share/solana/install/active_release"
+    cp -r /tmp/solana-release/bin "$HOME/.local/share/solana/install/active_release/"
+    rm -rf /tmp/solana-release /tmp/solana-release.tar.bz2
 fi
 export PATH="$HOME/.local/share/solana/install/active_release/bin:$PATH"
 
@@ -114,26 +119,24 @@ if [ ! -d "grincel.gpu" ]; then
     fi
 fi
 
-# Fallback to OpenCL-based SolVanityCL
+# Fallback to OpenCL-based SolVanityCL (Python/C)
 echo "[*] Trying SolVanityCL (OpenCL GPU accelerated)..."
 if [ ! -d "SolVanityCL" ]; then
     if git clone https://github.com/WincerChan/SolVanityCL.git 2>/dev/null; then
         cd SolVanityCL
 
-        # Install OpenCL dependencies
-        echo "[*] Installing OpenCL dependencies..."
-        sudo apt-get install -y -qq ocl-icd-opencl-dev opencl-headers clinfo
-
-        # Install Rust dependencies
-        cargo build --release
+        # Install OpenCL and Python dependencies
+        echo "[*] Installing OpenCL and Python dependencies..."
+        sudo apt-get install -y -qq ocl-icd-opencl-dev opencl-headers clinfo python3-pip
+        pip3 install -q -r requirements.txt 2>/dev/null || true
 
         echo ""
-        echo "=== Starting GPU Search (OpenCL) ==="
+        echo "=== Starting GPU Search (OpenCL/Python) ==="
         echo "Searching for: *$SUFFIX"
         echo "Press Ctrl+C when found"
         echo ""
 
-        ./target/release/sol_vanity_cl --suffix "$SUFFIX"
+        python3 main.py --suffix "$SUFFIX"
         exit 0
     fi
 fi

@@ -18,7 +18,7 @@ sudo apt-get update -qq
 
 # Install dependencies
 echo "[2/5] Installing dependencies..."
-sudo apt-get install -y -qq build-essential pkg-config libssl-dev git curl
+sudo apt-get install -y -qq build-essential pkg-config libssl-dev git curl wget
 
 # Install Rust if not present
 if ! command -v cargo &> /dev/null; then
@@ -65,6 +65,17 @@ else
     echo ""
 fi
 
+# Install Solana CLI for CPU fallback
+if ! command -v solana-keygen &> /dev/null; then
+    echo "[4.5/5] Installing Solana CLI..."
+    wget -q https://github.com/solana-labs/solana/releases/download/v2.0.20/solana-release-x86_64-unknown-linux-gnu.tar.bz2 -O /tmp/solana-release.tar.bz2
+    tar -xjf /tmp/solana-release.tar.bz2 -C /tmp
+    mkdir -p "$HOME/.local/share/solana/install/active_release"
+    cp -r /tmp/solana-release/bin "$HOME/.local/share/solana/install/active_release/"
+    rm -rf /tmp/solana-release /tmp/solana-release.tar.bz2
+fi
+export PATH="$HOME/.local/share/solana/install/active_release/bin:$PATH"
+
 # Clone and build GPU vanity generator
 echo "[5/5] Building vanity generator..."
 cd /tmp
@@ -97,20 +108,20 @@ if git clone https://github.com/ziglana/grincel.gpu.git 2>/dev/null; then
     exit 0
 fi
 
-# Fallback: Try OpenCL-based SolVanityCL
+# Fallback: Try OpenCL-based SolVanityCL (Python/C)
 echo "Trying SolVanityCL (OpenCL GPU accelerated)..."
 if git clone https://github.com/WincerChan/SolVanityCL.git 2>/dev/null; then
     cd SolVanityCL
 
-    sudo apt-get install -y -qq ocl-icd-opencl-dev opencl-headers clinfo
-    cargo build --release
+    sudo apt-get install -y -qq ocl-icd-opencl-dev opencl-headers clinfo python3-pip
+    pip3 install -q -r requirements.txt 2>/dev/null || true
 
     echo ""
-    echo "=== Starting GPU Search (OpenCL) ==="
+    echo "=== Starting GPU Search (OpenCL/Python) ==="
     echo "Looking for address ending with: $SUFFIX"
     echo ""
 
-    ./target/release/sol_vanity_cl --suffix "$SUFFIX"
+    python3 main.py --suffix "$SUFFIX"
     exit 0
 fi
 
