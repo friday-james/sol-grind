@@ -39,36 +39,61 @@ else
     echo "WARNING: nvidia-smi not found. Make sure NVIDIA drivers are installed."
 fi
 
-# Clone and build solana-vanity (GPU-accelerated)
+# Clone and build GPU vanity generator
 echo "[5/5] Building vanity generator..."
 cd /tmp
 
-# Option 1: Use vaniSOL (popular GPU-accelerated option)
-if [ ! -d "vaniSOL" ]; then
-    git clone https://github.com/paxsonsa/vaniSOL.git 2>/dev/null || {
-        echo "vaniSOL not available, trying alternative..."
-        # Option 2: Use solana CLI with CPU (fallback)
-        if ! command -v solana-keygen &> /dev/null; then
-            echo "Installing Solana CLI tools..."
-            sh -c "$(curl -sSfL https://release.solana.com/stable/install)"
-            export PATH="$HOME/.local/share/solana/install/active_release/bin:$PATH"
-        fi
-        echo ""
-        echo "=== Starting CPU-based search (slower) ==="
-        echo "Looking for address ending with: $SUFFIX"
-        echo ""
-        solana-keygen grind --ends-with "$SUFFIX":1 --ignore-case
-        exit 0
-    }
+# Try GPU-accelerated Zig tool (fastest)
+echo "Trying grincel.gpu (Zig/Vulkan GPU accelerated)..."
+if git clone https://github.com/ziglana/grincel.gpu.git 2>/dev/null; then
+    cd grincel.gpu
+
+    # Install Zig
+    if ! command -v zig &> /dev/null; then
+        echo "Installing Zig..."
+        wget -q https://ziglang.org/download/0.11.0/zig-linux-x86_64-0.11.0.tar.xz
+        tar -xf zig-linux-x86_64-0.11.0.tar.xz
+        export PATH="$PWD/zig-linux-x86_64-0.11.0:$PATH"
+    fi
+
+    # Install Vulkan SDK
+    sudo apt-get install -y -qq vulkan-tools libvulkan-dev vulkan-validationlayers
+
+    echo "Building grincel.gpu..."
+    zig build -Doptimize=ReleaseFast
+
+    echo ""
+    echo "=== Starting GPU Search (Zig/Vulkan) ==="
+    echo "Looking for address ending with: $SUFFIX"
+    echo ""
+
+    ./zig-out/bin/grincel.gpu --suffix "$SUFFIX"
+    exit 0
 fi
 
-cd vaniSOL
-cargo build --release
+# Fallback: Try OpenCL-based SolVanityCL
+echo "Trying SolVanityCL (OpenCL GPU accelerated)..."
+if git clone https://github.com/WincerChan/SolVanityCL.git 2>/dev/null; then
+    cd SolVanityCL
 
+    sudo apt-get install -y -qq ocl-icd-opencl-dev opencl-headers clinfo
+    cargo build --release
+
+    echo ""
+    echo "=== Starting GPU Search (OpenCL) ==="
+    echo "Looking for address ending with: $SUFFIX"
+    echo ""
+
+    ./target/release/sol_vanity_cl --suffix "$SUFFIX"
+    exit 0
+fi
+
+# Final fallback: CPU
 echo ""
-echo "=== Starting GPU-accelerated search ==="
+echo "GPU tools unavailable, using CPU fallback..."
+echo "=== Starting CPU-based search (slower) ==="
 echo "Looking for address ending with: $SUFFIX"
 echo ""
-
-./target/release/vanisol --suffix "$SUFFIX" --ignore-case
+export PATH="$HOME/.local/share/solana/install/active_release/bin:$PATH"
+solana-keygen grind --ends-with "$SUFFIX":1 --num-threads $(nproc)
 

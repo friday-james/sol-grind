@@ -47,36 +47,70 @@ export PATH="$HOME/.local/share/solana/install/active_release/bin:$PATH"
 
 # Clone GPU vanity tool
 echo "[*] Setting up GPU vanity generator..."
-cd ~
-if [ ! -d "solana-vanity-gpu" ]; then
-    # Try multiple known GPU vanity repos
-    git clone https://github.com/paxsonsa/vaniSOL.git solana-vanity-gpu 2>/dev/null || \
-    git clone https://github.com/Azoyalabs/solana-vanity-keygen.git solana-vanity-gpu 2>/dev/null || {
+cd /tmp
+
+# Try GPU-accelerated Zig tool first (fastest)
+if [ ! -d "grincel.gpu" ]; then
+    echo "[*] Cloning grincel.gpu (Zig/Vulkan GPU accelerated)..."
+    if git clone https://github.com/ziglana/grincel.gpu.git 2>/dev/null; then
+        cd grincel.gpu
+
+        # Install Zig if not present
+        if ! command -v zig &> /dev/null; then
+            echo "[*] Installing Zig..."
+            wget -q https://ziglang.org/download/0.11.0/zig-linux-x86_64-0.11.0.tar.xz
+            tar -xf zig-linux-x86_64-0.11.0.tar.xz
+            export PATH="$PWD/zig-linux-x86_64-0.11.0:$PATH"
+        fi
+
+        # Install Vulkan SDK for GPU compute
+        if ! dpkg -l | grep -q vulkan-tools; then
+            echo "[*] Installing Vulkan SDK..."
+            sudo apt-get install -y -qq vulkan-tools libvulkan-dev vulkan-validationlayers
+        fi
+
+        echo "[*] Building grincel.gpu..."
+        zig build -Doptimize=ReleaseFast
+
         echo ""
-        echo "[!] GPU tools unavailable, using CPU fallback (slower but works)..."
-        echo "[*] Starting search with $(nproc) threads..."
+        echo "=== Starting GPU Search (Zig/Vulkan) ==="
+        echo "Searching for: *$SUFFIX"
+        echo "Press Ctrl+C when found"
         echo ""
-        solana-keygen grind --ends-with "$SUFFIX":1 --ignore-case --num-threads $(nproc)
+
+        ./zig-out/bin/grincel.gpu --suffix "$SUFFIX"
         exit 0
-    }
+    fi
 fi
 
-cd solana-vanity-gpu
-cargo build --release
+# Fallback to OpenCL-based SolVanityCL
+echo "[*] Trying SolVanityCL (OpenCL GPU accelerated)..."
+if [ ! -d "SolVanityCL" ]; then
+    if git clone https://github.com/WincerChan/SolVanityCL.git 2>/dev/null; then
+        cd SolVanityCL
 
-echo ""
-echo "=== Starting GPU Search ==="
-echo "Searching for: *$SUFFIX (case-insensitive)"
-echo "Press Ctrl+C to stop"
-echo ""
+        # Install OpenCL dependencies
+        echo "[*] Installing OpenCL dependencies..."
+        sudo apt-get install -y -qq ocl-icd-opencl-dev opencl-headers clinfo
 
-# Run with appropriate args based on which tool was cloned
-if [ -f "target/release/vanisol" ]; then
-    ./target/release/vanisol --suffix "$SUFFIX" --ignore-case
-elif [ -f "target/release/solana-vanity-keygen" ]; then
-    ./target/release/solana-vanity-keygen --suffix "$SUFFIX"
-else
-    echo "Running default binary..."
-    ./target/release/* --suffix "$SUFFIX" --ignore-case 2>/dev/null || \
-    cargo run --release -- --suffix "$SUFFIX" --ignore-case
+        # Install Rust dependencies
+        cargo build --release
+
+        echo ""
+        echo "=== Starting GPU Search (OpenCL) ==="
+        echo "Searching for: *$SUFFIX"
+        echo "Press Ctrl+C when found"
+        echo ""
+
+        ./target/release/sol_vanity_cl --suffix "$SUFFIX"
+        exit 0
+    fi
 fi
+
+# Final fallback to CPU
+echo ""
+echo "[!] GPU tools failed, using CPU fallback..."
+echo "[*] Starting search with $(nproc) threads..."
+echo ""
+export PATH="$HOME/.local/share/solana/install/active_release/bin:$PATH"
+solana-keygen grind --ends-with "$SUFFIX":1 --num-threads $(nproc)
