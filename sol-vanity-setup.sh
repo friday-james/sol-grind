@@ -76,10 +76,10 @@ if git clone https://github.com/ziglana/grincel.gpu.git 2>/dev/null; then
 
     # Install Zig
     if ! command -v zig &> /dev/null; then
-        echo "Installing Zig..."
-        wget -q https://ziglang.org/download/0.11.0/zig-linux-x86_64-0.11.0.tar.xz
-        tar -xf zig-linux-x86_64-0.11.0.tar.xz
-        export PATH="$PWD/zig-linux-x86_64-0.11.0:$PATH"
+        echo "Installing Zig 0.13.0..."
+        wget -q https://ziglang.org/download/0.13.0/zig-linux-x86_64-0.13.0.tar.xz
+        tar -xf zig-linux-x86_64-0.13.0.tar.xz
+        export PATH="$PWD/zig-linux-x86_64-0.13.0:$PATH"
     fi
 
     # Install Vulkan SDK
