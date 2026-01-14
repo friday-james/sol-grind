@@ -36,7 +36,7 @@ fi
 echo "[*] Installing Python dependencies..."
 sudo apt-get update -qq
 sudo apt-get install -y -qq python3-pip
-pip3 install --break-system-packages eth-keys eth-utils 2>&1 | grep -E "Successfully installed|already satisfied" || true
+pip3 install --break-system-packages eth-keys eth-utils "eth-hash[pycryptodome]" 2>&1 | grep -E "Successfully installed|already satisfied" || true
 
 # Get script directory
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
