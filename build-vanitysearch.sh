@@ -5,7 +5,7 @@ echo "=== Building VanitySearch with GPU support ==="
 
 # Install dependencies
 sudo apt-get update -qq
-sudo apt-get install -y -qq git build-essential libgmp3-dev nvidia-cuda-toolkit
+sudo apt-get install -y -qq git build-essential libgmp3-dev nvidia-cuda-toolkit gcc-12 g++-12
 
 # Clone VanitySearch
 cd /tmp
@@ -24,15 +24,13 @@ sed -i '1i #include <cstdint>' hash/sha256.cpp
 # Fix hash/ripemd160.cpp - add missing include
 sed -i '1i #include <cstdint>' hash/ripemd160.cpp
 
-# Fix Makefile - use current CUDA path
+# Fix Makefile - use current CUDA path and gcc-12
 CUDA_PATH=$(dirname $(dirname $(which nvcc)))
 sed -i "s|/usr/local/cuda-8.0|$CUDA_PATH|g" Makefile
 sed -i "s|/usr/local/cuda|$CUDA_PATH|g" Makefile
-sed -i 's|g++-4.8|g++|g' Makefile
-sed -i 's|gcc-4.8|gcc|g' Makefile
-
-# Add -allow-unsupported-compiler flag to all nvcc calls
-sed -i 's|\$(CUDA)/bin/nvcc|\$(CUDA)/bin/nvcc -allow-unsupported-compiler|g' Makefile
+sed -i 's|g++-4.8|g++-12|g' Makefile
+sed -i 's|gcc-4.8|gcc-12|g' Makefile
+sed -i 's|-ccbin /usr/bin/g++|-ccbin /usr/bin/g++-12|g' Makefile
 
 echo "[*] Building with GPU support (compute capability 7.5 for L4)..."
 make gpu=1 CCAP=75
