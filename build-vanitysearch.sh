@@ -33,7 +33,7 @@ sed -i 's|gcc-4.8|gcc-12|g' Makefile
 sed -i 's|-ccbin /usr/bin/g++|-ccbin /usr/bin/g++-12|g' Makefile
 
 echo "[*] Building with GPU support (compute capability 7.5 for L4)..."
-make gpu=1 CCAP=75
+make gpu=1 CCAP=75 2>&1 | tee build.log
 
 if [ -f "VanitySearch" ]; then
     echo ""
@@ -46,5 +46,8 @@ if [ -f "VanitySearch" ]; then
     echo "  ./VanitySearch -gpu 1ead"
 else
     echo "❌ Build failed"
+    echo ""
+    echo "Last 50 lines of build output:"
+    tail -50 build.log
     exit 1
 fi
