@@ -37,6 +37,19 @@ echo "[*] Installing dependencies..."
 sudo apt-get update -qq
 sudo apt-get install -y -qq git build-essential libgmp3-dev
 
+# Install CUDA toolkit if GPU detected
+if [ "$USE_GPU" = true ]; then
+    if ! command -v nvcc &> /dev/null; then
+        echo "[*] Installing CUDA toolkit..."
+        sudo apt-get install -y -qq nvidia-cuda-toolkit
+    fi
+
+    # Create /usr/local/cuda symlink if it doesn't exist
+    if [ ! -d "/usr/local/cuda" ] && [ -d "/usr/lib/cuda" ]; then
+        sudo ln -sf /usr/lib/cuda /usr/local/cuda
+    fi
+fi
+
 # Clone VanitySearch (GPU-accelerated)
 cd /tmp
 if [ ! -d "VanitySearch" ]; then
@@ -50,7 +63,26 @@ cd VanitySearch
 if [ ! -f "VanitySearch" ]; then
     echo "[*] Building VanitySearch..."
     if [ "$USE_GPU" = true ]; then
-        make gpu=1 CCAP=75
+        # Detect CUDA path
+        if [ -d "/usr/local/cuda" ]; then
+            export CUDA_PATH=/usr/local/cuda
+        elif [ -d "/usr/lib/cuda" ]; then
+            export CUDA_PATH=/usr/lib/cuda
+        fi
+
+        # Update Makefile to use installed CUDA and gcc
+        sed -i 's|/usr/local/cuda-8.0|/usr/local/cuda|g' Makefile
+        sed -i 's|g++-4.8|g++|g' Makefile
+        sed -i 's|gcc-4.8|gcc|g' Makefile
+
+        # Build with GPU support (compute capability 7.5 for L4)
+        make gpu=1 CCAP=75 2>&1 | tee build.log
+
+        if [ ! -f "VanitySearch" ]; then
+            echo "GPU build failed, trying CPU mode..."
+            make clean
+            make
+        fi
     else
         make
     fi
