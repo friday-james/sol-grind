@@ -62,20 +62,28 @@ cd VanitySearch
 # Build
 if [ ! -f "VanitySearch" ]; then
     echo "[*] Building VanitySearch..."
-    if [ "$USE_GPU" = true ]; then
+
+    # Fix Timer.h missing include
+    if ! grep -q "#include <cstdint>" Timer.h; then
+        echo "[*] Patching Timer.h..."
+        sed -i '/#include <string>/a #include <cstdint>' Timer.h
+    fi
+
+    if [ "$USE_GPU" = true ] && command -v nvcc &> /dev/null; then
         # Detect CUDA path
-        if [ -d "/usr/local/cuda" ]; then
-            export CUDA_PATH=/usr/local/cuda
-        elif [ -d "/usr/lib/cuda" ]; then
-            export CUDA_PATH=/usr/lib/cuda
-        fi
+        CUDA_PATH=$(dirname $(dirname $(which nvcc)))
+        export CUDA_PATH
+
+        echo "[*] Using CUDA at: $CUDA_PATH"
 
         # Update Makefile to use installed CUDA and gcc
-        sed -i 's|/usr/local/cuda-8.0|/usr/local/cuda|g' Makefile
+        sed -i "s|/usr/local/cuda-8.0|$CUDA_PATH|g" Makefile
+        sed -i "s|/usr/local/cuda|$CUDA_PATH|g" Makefile
         sed -i 's|g++-4.8|g++|g' Makefile
         sed -i 's|gcc-4.8|gcc|g' Makefile
 
         # Build with GPU support (compute capability 7.5 for L4)
+        echo "[*] Building with GPU support..."
         make gpu=1 CCAP=75 2>&1 | tee build.log
 
         if [ ! -f "VanitySearch" ]; then
@@ -84,6 +92,7 @@ if [ ! -f "VanitySearch" ]; then
             make
         fi
     else
+        echo "[*] Building CPU-only version..."
         make
     fi
 fi
