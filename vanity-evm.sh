@@ -50,72 +50,53 @@ if [ "$USE_GPU" = true ]; then
     fi
 fi
 
-# Clone VanitySearch (GPU-accelerated)
+# Try profanity2 (better maintained, OpenCL-based)
 cd /tmp
-if [ ! -d "VanitySearch" ]; then
-    echo "[*] Cloning VanitySearch..."
-    git clone https://github.com/JeanLucPons/VanitySearch.git
+if [ ! -d "profanity2" ]; then
+    echo "[*] Cloning profanity2..."
+    git clone https://github.com/1inch/profanity2.git
 fi
 
-cd VanitySearch
+cd profanity2
 
 # Build
-if [ ! -f "VanitySearch" ]; then
-    echo "[*] Building VanitySearch..."
+if [ ! -f "profanity2.x64" ]; then
+    echo "[*] Building profanity2..."
 
-    # Fix Timer.h missing include
-    if ! grep -q "#include <cstdint>" Timer.h; then
-        echo "[*] Patching Timer.h..."
-        sed -i '/#include <string>/a #include <cstdint>' Timer.h
+    # Install OpenCL if needed
+    if [ "$USE_GPU" = true ]; then
+        sudo apt-get install -y -qq ocl-icd-opencl-dev opencl-headers
     fi
 
-    if [ "$USE_GPU" = true ] && command -v nvcc &> /dev/null; then
-        # Detect CUDA path
-        CUDA_PATH=$(dirname $(dirname $(which nvcc)))
-        export CUDA_PATH
+    make 2>&1 | tee build.log
 
-        echo "[*] Using CUDA at: $CUDA_PATH"
-
-        # Update Makefile to use installed CUDA and gcc
-        sed -i "s|/usr/local/cuda-8.0|$CUDA_PATH|g" Makefile
-        sed -i "s|/usr/local/cuda|$CUDA_PATH|g" Makefile
-        sed -i 's|g++-4.8|g++|g' Makefile
-        sed -i 's|gcc-4.8|gcc|g' Makefile
-
-        # Build with GPU support (compute capability 7.5 for L4)
-        echo "[*] Building with GPU support..."
-        make gpu=1 CCAP=75 2>&1 | tee build.log
-
-        if [ ! -f "VanitySearch" ]; then
-            echo "GPU build failed, trying CPU mode..."
-            make clean
-            make
-        fi
-    else
-        echo "[*] Building CPU-only version..."
-        make
+    if [ ! -f "profanity2.x64" ]; then
+        echo "ERROR: Build failed. Check build.log"
+        exit 1
     fi
 fi
+
+PROFANITY_BIN="./profanity2.x64"
 
 echo ""
 echo "=== Starting Search ==="
-echo "Pattern: $PATTERN ($POSITION)"
+echo "Pattern: 0x$PATTERN ($POSITION)"
 echo "Press Ctrl+C to stop"
 echo ""
 
 # Run search
 if [ "$POSITION" = "suffix" ]; then
-    # For suffix, we need to use -s flag
-    ./VanitySearch -s "$PATTERN" -gpu
+    echo "WARNING: Suffix search is very slow for EVM addresses!"
+    echo "Using --matching with suffix pattern..."
+    $PROFANITY_BIN --matching "^.*$PATTERN\$"
 else
-    # For prefix
-    if [ "$USE_GPU" = true ]; then
-        ./VanitySearch -gpu "$PATTERN"
-    else
-        ./VanitySearch "$PATTERN"
-    fi
+    # For prefix (default and recommended)
+    $PROFANITY_BIN --matching "^$PATTERN"
 fi
 
 echo ""
 echo "=== Search complete! ==="
-echo "Check output above for private key and address"
+echo "Private key and address shown above"
+echo ""
+echo "⚠️  SAVE THE PRIVATE KEY IMMEDIATELY!"
+echo "⚠️  Import it into MetaMask, Phantom, or other wallet"
