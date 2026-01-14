@@ -2,20 +2,23 @@
 set -e
 
 if [ -z "$1" ]; then
-    echo "Usage: $0 <pattern> [prefix|suffix]"
+    echo "Usage: $0 <pattern> [prefix|suffix] [case-sensitive]"
     echo ""
     echo "Examples:"
-    echo "  $0 1ead           # Prefix: 0x1ead..."
-    echo "  $0 cafe prefix    # Prefix: 0xcafe..."
+    echo "  $0 1ead                    # Case-insensitive prefix: 0x1ead..."
+    echo "  $0 1ead prefix true        # Case-sensitive: 0x1ead... (exact case)"
+    echo "  $0 cafe prefix false       # Case-insensitive: 0xcafe, 0xCaFe, etc."
     echo ""
     exit 1
 fi
 
 PATTERN="$1"
 MODE="${2:-prefix}"
+CASE_SENSITIVE="${3:-false}"
 
 echo "=== EVM Vanity Address Generator (GPU) ==="
 echo "Pattern: $PATTERN"
+echo "Case-sensitive: $CASE_SENSITIVE"
 echo ""
 
 # Build VanitySearch if needed
@@ -38,12 +41,19 @@ echo "Press Ctrl+C to stop"
 echo ""
 
 # Run search
+SEARCH_ARGS="-gpu"
+
+# Add case-insensitive flag if needed
+if [ "$CASE_SENSITIVE" = "false" ]; then
+    SEARCH_ARGS="$SEARCH_ARGS -i"
+fi
+
 if [ "$MODE" = "suffix" ]; then
     # Suffix mode (slow)
-    ./VanitySearch -gpu -s "$PATTERN"
+    ./VanitySearch $SEARCH_ARGS -s "$PATTERN"
 else
     # Prefix mode (fast)
-    ./VanitySearch -gpu "$PATTERN"
+    ./VanitySearch $SEARCH_ARGS "$PATTERN"
 fi
 
 echo ""
