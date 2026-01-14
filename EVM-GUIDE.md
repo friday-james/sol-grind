@@ -23,17 +23,19 @@ Generate custom Ethereum/EVM vanity addresses with GPU acceleration.
 | **Prefix search** | Fast | Slow |
 | **Suffix search** | Very slow | Fast |
 
-## Performance (NVIDIA L4)
+## Performance (CPU-based Python)
 
 **Prefix search (recommended):**
 
 | Length | Speed | Time |
 |--------|-------|------|
-| 4 chars (0xdead) | ~400 MH/s | **<1 second** |
-| 5 chars (0xcafe1) | ~400 MH/s | **~10 seconds** |
-| 6 chars (0xbeef42) | ~400 MH/s | **~3 minutes** |
-| 7 chars (0xdeadcaf) | ~400 MH/s | **~45 minutes** |
-| 8 chars (0xcafebabe) | ~400 MH/s | **~12 hours** |
+| 4 chars (0x1ead) | ~20-50k/s | **~1 second** |
+| 5 chars (0xcafe1) | ~20-50k/s | **~15 seconds** |
+| 6 chars (0xbeef42) | ~20-50k/s | **~5 minutes** |
+| 7 chars (0xdeadcaf) | ~20-50k/s | **~90 minutes** |
+| 8 chars (0xcafebabe) | ~20-50k/s | **~24 hours** |
+
+**Note:** Uses pure Python (CPU). Fast enough for 4-6 character patterns.
 
 **Suffix search (much slower):**
 
