@@ -41,5 +41,5 @@ pip3 install --break-system-packages eth-keys eth-utils "eth-hash[pycryptodome]"
 # Get script directory
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-# Run Python vanity generator
-python3 "$SCRIPT_DIR/evm-vanity-simple.py" "$PATTERN" "$POSITION"
+# Run Python vanity generator (fast multiprocessing version)
+python3 "$SCRIPT_DIR/evm-vanity-fast.py" "$PATTERN" "$POSITION"
