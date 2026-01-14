@@ -1,6 +1,6 @@
-# Solana Vanity Address Generator
+# Vanity Address Generator
 
-GPU-accelerated Solana vanity address generator scripts for AWS GPU instances (g6.xlarge, g4dn, g5, etc).
+GPU-accelerated vanity address generator for **Solana** and **EVM (Ethereum)** on AWS GPU instances (g6.xlarge, g4dn, g5, etc).
 
 ## Features
 
@@ -11,7 +11,9 @@ GPU-accelerated Solana vanity address generator scripts for AWS GPU instances (g
 
 ## Quick Start
 
-### One-Shot Script (Recommended)
+### Solana Addresses
+
+#### One-Shot Script (Recommended)
 
 ```bash
 # Clone the repo
@@ -26,6 +28,21 @@ cd sol-grind
 ```
 
 **That's it!** The script handles everything automatically.
+
+### EVM (Ethereum) Addresses
+
+```bash
+# Clone the repo
+git clone https://github.com/friday-james/sol-grind.git
+cd sol-grind
+
+# Generate EVM vanity address (prefix)
+./vanity-evm.sh dead        # 0xdead... (~1 second)
+./vanity-evm.sh cafe        # 0xcafe... (~10 seconds)
+./vanity-evm.sh deadbeef    # 0xdeadbeef... (~8 hours)
+```
+
+📘 **See [EVM-GUIDE.md](EVM-GUIDE.md)** for detailed EVM guide and benchmarks.
 
 ### Full Setup Script (First Time on Fresh Instance)
 
@@ -43,6 +60,8 @@ The script will:
 
 ## Performance
 
+### Solana (6-character suffix)
+
 | Hardware | Keys/Second | Time (case-insensitive) | Time (case-sensitive) |
 |----------|-------------|-------------------------|------------------------|
 | CPU (16 threads) | ~167k | ~2 hours | ~63 hours |
@@ -50,6 +69,15 @@ The script will:
 | NVIDIA A10G (g5.xlarge) | 100-200M | **<1 min** | 3-7 min |
 
 **Note:** Case-insensitive is **30x faster** (matches any case: `ifsa1e`, `IFSA1E`, `IfSa1E`, etc.)
+
+### EVM (Ethereum prefix search)
+
+| Hardware | Keys/Second | 4-char | 5-char | 6-char | 7-char |
+|----------|-------------|--------|--------|--------|--------|
+| NVIDIA L4 (g6.xlarge) | 400M | <1 sec | ~10 sec | ~3 min | ~45 min |
+| NVIDIA A10G (g5.xlarge) | 1.5-2B | <1 sec | ~3 sec | ~30 sec | ~8 min |
+
+**Note:** EVM prefix searches are much faster than Solana due to simpler key derivation.
 
 ## Scripts
 
@@ -71,6 +99,23 @@ One-shot script that just works. No fuss, no configuration.
 ./vanity.sh ifsa1e false  # Same as above
 ./vanity.sh ifsa1e true   # Case-sensitive (slow, ~30 min)
 ```
+
+### `vanity-evm.sh` (EVM/Ethereum)
+
+Generate Ethereum/EVM vanity addresses with GPU acceleration.
+
+```bash
+./vanity-evm.sh <pattern> [prefix|suffix]
+```
+
+**Examples:**
+```bash
+./vanity-evm.sh dead        # Prefix: 0xdead...
+./vanity-evm.sh cafe prefix # Prefix: 0xcafe...
+./vanity-evm.sh beef suffix # Suffix: ...beef (slow)
+```
+
+**Note:** Prefix searches are **1000x faster** than suffix for EVM.
 
 ### `sol-vanity-gpu.sh`
 
@@ -98,7 +143,17 @@ Setup script with full installation flow.
 
 Same features as `sol-vanity-gpu.sh` but optimized for first-time setup.
 
+### `decode-key.sh`
+
+Convert Solana keypair JSON to human-readable base58 format.
+
+```bash
+./decode-key.sh <keypair.json>
+```
+
 ## Valid Characters
+
+### Solana (Base58)
 
 Solana addresses use **base58 encoding**. Only these characters are valid:
 
@@ -112,17 +167,46 @@ Solana addresses use **base58 encoding**. Only these characters are valid:
 - `I` (uppercase i) - conflicts with `1` and `l`
 - `l` (lowercase L) - conflicts with `1` and `I`
 
+### EVM/Ethereum (Hex)
+
+EVM addresses use **hexadecimal encoding**. Only these characters are valid:
+
+```
+0123456789abcdef
+```
+
+**Note:** Letters g-z are not valid in hex addresses.
+
 ## Examples
+
+### Solana
 
 ```bash
 # Valid suffixes
-./sol-vanity-gpu.sh ifsa1e
-./sol-vanity-gpu.sh monkey
-./sol-vanity-gpu.sh 420blazeit
+./vanity.sh ifsa1e
+./vanity.sh monkey
+./vanity.sh 420blazeit
 
 # Invalid (contains 'l' or 'O')
-./sol-vanity-gpu.sh illegal   # ❌ contains 'l'
-./sol-vanity-gpu.sh MOON      # ❌ contains 'O'
+./vanity.sh illegal   # ❌ contains 'l'
+./vanity.sh MOON      # ❌ contains 'O'
+```
+
+### EVM
+
+```bash
+# Quick (seconds)
+./vanity-evm.sh dead       # 0xdead... (<1 sec)
+./vanity-evm.sh 1337       # 0x1337... (<1 sec)
+./vanity-evm.sh cafe       # 0xcafe... (~10 sec)
+
+# Medium (hours)
+./vanity-evm.sh deadc0de   # 0xdeadc0de... (~1 hour)
+./vanity-evm.sh cafebabe   # 0xcafebabe... (~12 hours)
+
+# Invalid (not hex)
+./vanity-evm.sh hello      # ❌ contains non-hex chars
+./vanity-evm.sh monkey     # ❌ contains 'monkey' (not hex)
 ```
 
 ## Security Notes
