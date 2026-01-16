@@ -2,12 +2,13 @@
 set -e
 
 if [ -z "$1" ]; then
-    echo "Usage: $0 <prefix|suffix> [position]"
+    echo "Usage: $0 <pattern> [position] [case-sensitive]"
     echo ""
     echo "Examples:"
-    echo "  $0 dead           # Prefix: 0xdead..."
-    echo "  $0 cafe prefix    # Prefix: 0xcafe..."
-    echo "  $0 beef suffix    # Suffix: ...beef"
+    echo "  $0 dead                  # Prefix: 0xdead... (case-insensitive)"
+    echo "  $0 1ead prefix true      # Prefix: 0x1ead... (case-sensitive)"
+    echo "  $0 cafe prefix false     # Prefix: 0xcafe... (case-insensitive)"
+    echo "  $0 beef suffix           # Suffix: ...beef (case-insensitive)"
     echo ""
     echo "Note: EVM addresses are hex (0-9, a-f only)"
     exit 1
@@ -15,10 +16,12 @@ fi
 
 PATTERN="$1"
 POSITION="${2:-prefix}"
+CASE_SENSITIVE="${3:-false}"
 
 echo "=== EVM Vanity Address Generator ==="
 echo "Pattern: $PATTERN"
 echo "Position: $POSITION"
+echo "Case-sensitive: $CASE_SENSITIVE"
 echo ""
 
 # Check GPU
@@ -42,4 +45,4 @@ pip3 install --break-system-packages eth-keys eth-utils "eth-hash[pycryptodome]"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 # Run Python vanity generator (fast multiprocessing version)
-python3 "$SCRIPT_DIR/evm-vanity-fast.py" "$PATTERN" "$POSITION"
+python3 "$SCRIPT_DIR/evm-vanity-fast.py" "$PATTERN" "$POSITION" "$CASE_SENSITIVE"
