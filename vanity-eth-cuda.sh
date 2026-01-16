@@ -34,11 +34,11 @@ echo "Pattern: 0x$PATTERN"
 echo "Press Ctrl+C to stop"
 echo ""
 
-# Run search
+# Run search (use GPU 0)
 if [ "$CASE_SENSITIVE" = "true" ]; then
-    ./eth-vanity -p "$PATTERN" -c
+    ./eth-vanity -p "$PATTERN" -c -d 0
 else
-    ./eth-vanity -p "$PATTERN"
+    ./eth-vanity -p "$PATTERN" -d 0
 fi
 
 echo ""
