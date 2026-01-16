@@ -15,8 +15,8 @@ cd eth-vanity-cuda
 
 echo "[*] Building with CUDA support (L4 GPU)..."
 
-# Compile with gcc-12 for CUDA compatibility
-nvcc -O3 -arch=sm_75 --compiler-bindir=/usr/bin/g++-12 -o eth-vanity main.cu
+# Compile with gcc-12 for CUDA compatibility (main.cu is in src/)
+nvcc -O3 -arch=sm_75 --compiler-bindir=/usr/bin/g++-12 -o eth-vanity src/main.cu
 
 if [ -f "eth-vanity" ]; then
     echo ""
